@@ -8,17 +8,20 @@ $token = "";
 
 $apiurl = "https://api.telegram.org/bot".$token;
 
-$cotizacion_json = file_get_contents("http://dolar.melizeche.com/api/1.0/");
-$cotizacion = json_decode($cotizacion_json);
+
+
 
 while(true){
-    $cotizacion = json_decode($cotizacion_json);
     $offset = file_get_contents("offset");
     $offset = empty($offset)?0:$offset;
     $offset++;
     $mensajes_json = file_get_contents($apiurl."/getupdates?offset=".$offset);
 
     $mensajes = json_decode($mensajes_json, true);
+    if(count($mensajes["result"])){
+	$cotizacion_json = file_get_contents("http://dolar.melizeche.com/api/1.0/");
+	$cotizacion = json_decode($cotizacion_json);
+    }
     foreach($mensajes["result"] as $mensaje){
         $texto = $mensaje["message"]["text"];
         $chat_id = $mensaje["message"]["chat"]["id"];
@@ -34,10 +37,11 @@ while(true){
         }    
         file_get_contents($apiurl."/sendmessage?chat_id=$chat_id&text=".urlencode($respuesta));
     }
-
-    $file = fopen("offset", "w");
-    fwrite($file, $update_id);
-    fclose($file);
-    sleep(1);        
+    if(count($mensajes["result"])){
+	    $file = fopen("offset", "w");
+	    fwrite($file, $update_id);
+	    fclose($file);
+	    sleep(1);        
+    }
 }
 ?>
